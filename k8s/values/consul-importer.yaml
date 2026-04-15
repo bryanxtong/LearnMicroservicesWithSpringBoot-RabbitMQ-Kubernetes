@@ -1,0 +1,50 @@
+image:
+  repository: hashicorp/consul
+  tag: "1.21.0"
+
+workload:
+  type: Job
+
+service:
+  enabled: false
+
+job:
+  backoffLimit: 10
+  restartPolicy: OnFailure
+  hook: "post-install,post-upgrade"
+  hookDeletePolicy: "before-hook-creation"
+  command:
+    - sh
+    - -c
+    - |
+      consul kv put config/ "" &&
+      consul kv put config/application/ "" &&
+      consul kv put config/application/data @/config/application.yaml &&
+      echo "KV import done"
+  waitFor:
+    enabled: true
+    host: consul-server
+    port: 8500
+
+env:
+  CONSUL_HTTP_ADDR: "consul-server:8500"
+
+configMap:
+  enabled: true
+  mountPath: /config
+  volumeName: kv-data
+  data:
+    application.yaml: |
+      spring:
+        cloud:
+          consul:
+            discovery:
+              instance-id: ${spring.application.name}-${random.int(1000)}
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi

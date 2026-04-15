@@ -1,0 +1,41 @@
+# hashicorp/consul values
+# Dev mode: single node, no TLS, no ACL for local development
+global:
+  name: consul
+  datacenter: dc1
+  tls:
+    enabled: false
+  acls:
+    manageSystemACLs: false
+
+server:
+  enabled: true
+  replicas: 1
+  bootstrapExpect: 1
+  extraConfig: |
+    {
+      "ui_config": {
+        "enabled": true
+      }
+    }
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+client:
+  enabled: false
+
+# Expose Consul UI via NodePort (kind maps 30850 → host:8500)
+ui:
+  enabled: true
+  service:
+    type: NodePort
+    nodePort:
+      http: 30850
+
+connectInject:
+  enabled: false

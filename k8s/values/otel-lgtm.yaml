@@ -1,0 +1,68 @@
+image:
+  repository: grafana/otel-lgtm
+  tag: latest
+  pullPolicy: Always
+
+service:
+  port: 3000
+  nodePort: 30001
+
+nodePort:
+  enabled: true
+
+env:
+  GF_DATABASE_WAL: "true"
+  GF_DATABASE_TRANSACTION_RETRIES: "10"
+  GF_DATABASE_QUERY_RETRIES: "5"
+  GF_SERVER_ROOT_URL: "/grafana"
+  GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+
+livenessProbe:
+  enabled: false
+
+readinessProbe:
+  enabled: true
+  type: exec
+  execCommand: ["cat", "/tmp/ready"]
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 12
+
+extraPorts:
+  - name: tempo
+    containerPort: 3200
+  - name: pyroscope
+    containerPort: 4040
+  - name: otlp-grpc
+    containerPort: 4317
+  - name: otlp-http
+    containerPort: 4318
+  - name: prometheus
+    containerPort: 9090
+
+emptyDirVolumes:
+  - name: tempo-data
+    mountPath: /data/tempo
+  - name: loki-data
+    mountPath: /data/loki
+  - name: loki-storage
+    mountPath: /loki
+  - name: p8s-storage
+    mountPath: /data/prometheus
+  - name: pyroscope-storage
+    mountPath: /data/pyroscope
+
+persistence:
+  enabled: true
+  storageClass: standard
+  size: 5Gi
+  mountPath: /data/grafana
+  volumeName: grafana-storage
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi

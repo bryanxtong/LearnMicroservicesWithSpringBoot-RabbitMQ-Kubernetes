@@ -1,0 +1,69 @@
+{{- if eq .Values.workload.type "Job" }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": {{ .Values.job.hook }}
+    "helm.sh/hook-delete-policy": {{ .Values.job.hookDeletePolicy }}
+spec:
+  backoffLimit: {{ .Values.job.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      restartPolicy: {{ .Values.job.restartPolicy }}
+      {{- if .Values.job.waitFor.enabled }}
+      initContainers:
+        - name: wait-for-{{ .Values.job.waitFor.host }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z {{ .Values.job.waitFor.host }} {{ .Values.job.waitFor.port }}; do
+                echo "Waiting for {{ .Values.job.waitFor.host }}:{{ .Values.job.waitFor.port }}..."
+                sleep 3
+              done
+      {{- end }}
+      containers:
+        - name: {{ .Release.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.job.command }}
+          command:
+            {{- toYaml .Values.job.command | nindent 12 }}
+          {{- end }}
+          {{- if or .Values.env .Values.secretEnv }}
+          env:
+            {{- range $name, $value := .Values.env }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- range .Values.secretEnv }}
+            - name: {{ .name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .secretName }}
+                  key: {{ .key }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.configMap.enabled }}
+          volumeMounts:
+            - name: {{ .Values.configMap.volumeName }}
+              mountPath: {{ .Values.configMap.mountPath }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- if .Values.configMap.enabled }}
+      volumes:
+        - name: {{ .Values.configMap.volumeName }}
+          configMap:
+            name: {{ .Release.Name }}-config
+      {{- end }}
+{{- end }}

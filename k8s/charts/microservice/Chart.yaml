@@ -1,0 +1,5 @@
+apiVersion: v2
+name: microservice
+description: Generic Helm chart reused by all Spring Boot microservices
+type: application
+version: 0.1.0

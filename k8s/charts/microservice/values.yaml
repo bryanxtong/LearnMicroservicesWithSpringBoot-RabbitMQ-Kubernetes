@@ -1,0 +1,120 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Universal chart — completely generic, knows nothing about Spring/OTEL/RabbitMQ.
+#
+# Env vars are supplied entirely from values files:
+#   env:       map of NAME: value
+#   secretEnv: list of {name, secretName, key}
+#
+# Feature flags (absent = false, write enabled: true to activate):
+#   workload.type        Deployment | Job
+#   service.enabled      false for Jobs
+#   ingress.enabled      true for frontend
+#   nodePort.enabled     true for otel-lgtm
+#   configMap.enabled    true for consul-importer
+#   livenessProbe/readinessProbe.type  http | tcp | exec
+# ──────────────────────────────────────────────────────────────────────────────
+
+image:
+  repository: ""
+  tag: ""
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+# ── Workload type ─────────────────────────────────────────────────────────────
+workload:
+  type: Deployment    # Deployment | Job
+
+# ── Service ───────────────────────────────────────────────────────────────────
+service:
+  enabled: true
+  port: 8080
+  nodePort: null      # set to a port number when nodePort.enabled=true
+
+# ── Ingress ───────────────────────────────────────────────────────────────────
+ingress:
+  enabled: false
+  host: "localhost"
+  apiPrefix: ""       # e.g. "api" → routes /api/(...) to apiBackend
+  apiBackend:
+    service: ""       # backend service name for the apiPrefix route
+    port: 0
+
+# ── NodePort ──────────────────────────────────────────────────────────────────
+nodePort:
+  enabled: false
+
+# ── Environment variables (generic) ───────────────────────────────────────────
+env: {}
+# MY_VAR: "my-value"
+
+# Env vars sourced from k8s Secrets
+secretEnv: []
+# - name: MY_SECRET_VAR
+#   secretName: my-secret
+#   key: my-key
+
+# ── Health probes ─────────────────────────────────────────────────────────────
+livenessProbe:
+  enabled: true
+  type: http          # http | tcp | exec
+  httpPath: /
+  execCommand: []
+  initialDelaySeconds: 40
+  periodSeconds: 10
+  failureThreshold: 8
+
+readinessProbe:
+  enabled: true
+  type: http          # http | tcp | exec
+  httpPath: /
+  execCommand: []
+  initialDelaySeconds: 40
+  periodSeconds: 10
+  failureThreshold: 8
+
+# ── Extra container ports ─────────────────────────────────────────────────────
+extraPorts: []
+# - name: otlp-grpc
+#   containerPort: 4317
+
+# ── EmptyDir volumes ──────────────────────────────────────────────────────────
+emptyDirVolumes: []
+# - name: tempo-data
+#   mountPath: /data/tempo
+
+# ── Persistence (PVC) ──────────────────────────────────────────────────────────
+persistence:
+  enabled: false
+  storageClass: standard
+  size: 5Gi
+  mountPath: /data
+  volumeName: data-volume
+
+# ── Job settings (workload.type=Job only) ─────────────────────────────────────
+job:
+  backoffLimit: 10
+  restartPolicy: OnFailure
+  hook: "post-install,post-upgrade"
+  hookDeletePolicy: "before-hook-creation"
+  command: []
+  waitFor:
+    enabled: false
+    host: ""
+    port: 0
+
+# ── ConfigMap (mounted into container) ────────────────────────────────────────
+configMap:
+  enabled: false
+  mountPath: "/config"
+  volumeName: "config-volume"
+  data: {}
+
+# ── Resources ─────────────────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: 200m
+    memory: 384Mi
+  limits:
+    cpu: 500m
+    memory: 768Mi

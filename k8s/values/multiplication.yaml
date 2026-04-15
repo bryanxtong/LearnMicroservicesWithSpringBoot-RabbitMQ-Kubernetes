@@ -1,0 +1,45 @@
+image:
+  repository: multiplication
+  tag: "0.0.1-SNAPSHOT"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8080
+
+env:
+  SPRING_PROFILES_ACTIVE: "kubernetes"
+  SPRING_CLOUD_CONSUL_HOST: "consul-server"
+  SPRING_RABBITMQ_HOST: "rabbitmq"
+  OTEL_SERVICE_NAME: "multiplication"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-lgtm:4318"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+
+secretEnv:
+  - name: SPRING_RABBITMQ_USERNAME
+    secretName: rabbitmq-default-user
+    key: username
+  - name: SPRING_RABBITMQ_PASSWORD
+    secretName: rabbitmq-default-user
+    key: password
+
+livenessProbe:
+  httpPath: /actuator/health
+  initialDelaySeconds: 180
+  periodSeconds: 15
+  failureThreshold: 10
+  timeoutSeconds: 30
+
+readinessProbe:
+  httpPath: /actuator/health
+  initialDelaySeconds: 180
+  periodSeconds: 15
+  failureThreshold: 10
+  timeoutSeconds: 30
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

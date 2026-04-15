@@ -1,0 +1,147 @@
+repositories:
+  - name: hashicorp
+    url: https://helm.releases.hashicorp.com
+  - name: ingress-nginx
+    url: https://kubernetes.github.io/ingress-nginx
+
+helmDefaults:
+  createNamespace: true
+  wait: true
+  timeout: 300
+
+releases:
+  # ─── 1. Ingress Controller ──────────────────────────────────────────────────
+  - name: ingress-nginx
+    namespace: ingress-nginx
+    chart: ingress-nginx/ingress-nginx
+    values:
+      - controller:
+          replicaCount: 1
+          hostPort:
+            enabled: true
+          service:
+            type: NodePort
+          nodeSelector:
+            ingress-ready: "true"
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: Equal
+              effect: NoSchedule
+          readinessProbe:
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 5
+          config:
+            pid-file: /var/run/nginx.pid
+
+  # ─── 2. Consul (HashiCorp official) ─────────────────────────────────────────
+  - name: consul
+    namespace: microservices
+    chart: hashicorp/consul
+    values:
+      - values/consul.yaml
+
+  # ─── 3. RabbitMQ — kubectl only, no Helm chart ──────────────────────────────
+  - name: rabbitmq
+    namespace: microservices
+    chart: charts/empty
+    hooks:
+      - events: ["presync"]
+        command: kubectl
+        args: [apply, --server-side, -f,
+               "https://github.com/rabbitmq/cluster-operator/releases/latest/download/cluster-operator.yml"]
+      - events: ["presync"]
+        command: kubectl
+        args: [wait, --for=condition=Available,
+               deployment/rabbitmq-cluster-operator, -n, rabbitmq-system, --timeout=180s]
+      - events: ["postsync"]
+        command: kubectl
+        args: [apply, -f, values/rabbitmq-cluster.yaml]
+      - events: ["postsync"]
+        command: kubectl
+        args: [wait, rabbitmqcluster/rabbitmq,
+               --for=condition=AllReplicasReady, -n, microservices, --timeout=300s]
+
+  # ─── 4. Observability ───────────────────────────────────────────────────────
+  - name: otel-lgtm
+    namespace: microservices
+    chart: charts/microservice
+    values:
+      - values/otel-lgtm.yaml
+
+  # ─── 5. Consul KV bootstrap (Job) ───────────────────────────────────────────
+  - name: consul-importer
+    namespace: microservices
+    chart: charts/microservice
+    values:
+      - values/consul-importer.yaml
+    needs:
+      - microservices/consul
+
+  # ─── 6. Business services ───────────────────────────────────────────────────
+  # Each service values file is fully self-contained:
+  # image, port, env (SPRING_*, OTEL_*), secretEnv (RabbitMQ creds), probe
+
+  - name: multiplication
+    namespace: microservices
+    chart: charts/microservice
+    values:
+      - values/multiplication.yaml
+    needs:
+      - microservices/rabbitmq
+      - microservices/consul-importer
+
+  - name: gamification
+    namespace: microservices
+    chart: charts/microservice
+    values:
+      - values/gamification.yaml
+    needs:
+      - microservices/rabbitmq
+      - microservices/consul-importer
+
+  - name: logs
+    namespace: microservices
+    chart: charts/microservice
+    values:
+      - values/logs.yaml
+    needs:
+      - microservices/rabbitmq
+      - microservices/consul-importer
+
+  - name: gateway
+    namespace: microservices
+    chart: charts/microservice
+    values:
+      - values/gateway.yaml
+    needs:
+      - microservices/multiplication
+      - microservices/gamification
+
+  # ─── 7. Ingress Rules (centralized) ─────────────────────────────────────────
+  - name: ingress
+    namespace: microservices
+    chart: charts/microservice
+    values:
+      - values/ingress.yaml
+    needs:
+      - microservices/gateway
+      - microservices/otel-lgtm
+      - microservices/consul
+      - ingress-nginx/ingress-nginx
+
+  # ─── 8. Frontend ────────────────────────────────────────────────────────────
+  - name: frontend
+    namespace: microservices
+    chart: charts/microservice
+    values:
+      - values/frontend.yaml
+    needs:
+      - microservices/gateway
+      - ingress-nginx/ingress-nginx

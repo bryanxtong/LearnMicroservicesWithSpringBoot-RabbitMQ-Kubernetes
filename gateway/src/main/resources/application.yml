@@ -52,3 +52,40 @@ logging:
     org.springframework.amqp.rabbit.connection.CachingConnectionFactory: WARN
     # Uncomment the configuration below if you want to enable route matching logs
     #org.springframework.cloud.gateway.handler.predicate: trace
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  rabbitmq:
+    host: rabbitmq
+
+---
+spring:
+  config:
+    activate:
+      on-cloud-platform: kubernetes
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - "http://challenges-frontend:3000"
+                  - "http://localhost:3000"
+                  - "http://localhost:80"
+                  - "http://localhost:30080"
+                allowedHeaders:
+                  - "*"
+                allowedMethods:
+                  - "GET"
+                  - "POST"
+                  - "OPTIONS"
+                allowCredentials: true
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST}
+    username: ${SPRING_RABBITMQ_USERNAME}
+    password: ${SPRING_RABBITMQ_PASSWORD}

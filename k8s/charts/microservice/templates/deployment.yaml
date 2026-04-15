@@ -1,0 +1,124 @@
+{{- if eq .Values.workload.type "Deployment" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Release.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+            {{- range .Values.extraPorts }}
+            - name: {{ .name }}
+              containerPort: {{ .containerPort }}
+            {{- end }}
+          # ── Env vars: plain values + secret refs ──────────────────────────
+          {{- if or .Values.env .Values.secretEnv }}
+          env:
+            {{- range $name, $value := .Values.env }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- range .Values.secretEnv }}
+            - name: {{ .name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .secretName }}
+                  key: {{ .key }}
+            {{- end }}
+          {{- end }}
+          # ── Volume mounts ─────────────────────────────────────────────────
+          {{- if or .Values.configMap.enabled .Values.emptyDirVolumes .Values.persistence.enabled }}
+          volumeMounts:
+            {{- if .Values.configMap.enabled }}
+            - name: {{ .Values.configMap.volumeName }}
+              mountPath: {{ .Values.configMap.mountPath }}
+            {{- end }}
+            {{- if .Values.persistence.enabled }}
+            - name: {{ .Values.persistence.volumeName }}
+              mountPath: {{ .Values.persistence.mountPath }}
+            {{- end }}
+            {{- range .Values.emptyDirVolumes }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
+          {{- end }}
+          # ── Liveness probe ────────────────────────────────────────────────
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            {{- if eq .Values.livenessProbe.type "http" }}
+            httpGet:
+              path: {{ .Values.livenessProbe.httpPath }}
+              port: {{ .Values.service.port }}
+            {{- else if eq .Values.livenessProbe.type "tcp" }}
+            tcpSocket:
+              port: {{ .Values.service.port }}
+            {{- else if eq .Values.livenessProbe.type "exec" }}
+            exec:
+              command:
+                {{- toYaml .Values.livenessProbe.execCommand | nindent 16 }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            {{- if .Values.livenessProbe.timeoutSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          # ── Readiness probe ───────────────────────────────────────────────
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            {{- if eq .Values.readinessProbe.type "http" }}
+            httpGet:
+              path: {{ .Values.readinessProbe.httpPath }}
+              port: {{ .Values.service.port }}
+            {{- else if eq .Values.readinessProbe.type "tcp" }}
+            tcpSocket:
+              port: {{ .Values.service.port }}
+            {{- else if eq .Values.readinessProbe.type "exec" }}
+            exec:
+              command:
+                {{- toYaml .Values.readinessProbe.execCommand | nindent 16 }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            {{- if .Values.readinessProbe.timeoutSeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      # ── Volumes ───────────────────────────────────────────────────────────
+      {{- if or .Values.configMap.enabled .Values.emptyDirVolumes .Values.persistence.enabled }}
+      volumes:
+        {{- if .Values.configMap.enabled }}
+        - name: {{ .Values.configMap.volumeName }}
+          configMap:
+            name: {{ .Release.Name }}-config
+        {{- end }}
+        {{- if .Values.persistence.enabled }}
+        - name: {{ .Values.persistence.volumeName }}
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-pvc
+        {{- end }}
+        {{- range .Values.emptyDirVolumes }}
+        - name: {{ .name }}
+        emptyDir: {}
+        {{- end }}
+      {{- end }}
+{{- end }}

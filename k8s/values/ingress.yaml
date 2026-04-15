@@ -1,0 +1,40 @@
+image:
+  repository: nginx
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+workload:
+  type: Deployment
+
+service:
+  enabled: false
+
+ingress:
+  enabled: true
+  host: localhost
+  paths:
+    - path: /api(/|$)(.*)
+      service: gateway
+      port: 8000
+    - path: /grafana(/|$)(.*)
+      service: otel-lgtm
+      port: 3000
+    - path: /consul(/|$)(.*)
+      service: consul-server
+      port: 8500
+    - path: /rabbitmq(/|$)(.*)
+      service: rabbitmq-server
+      port: 15672
+    - path: /()(.*)
+      service: frontend
+      port: 80
+
+env: {}
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi

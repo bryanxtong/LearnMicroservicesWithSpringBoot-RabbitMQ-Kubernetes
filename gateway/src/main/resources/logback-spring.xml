@@ -5,6 +5,8 @@
     <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
 
     <springProperty scope="context" name="rabbitMQHost" source="spring.rabbitmq.host"/>
+    <springProperty scope="context" name="rabbitMQUsername" source="spring.rabbitmq.username" defaultValue="guest"/>
+    <springProperty scope="context" name="rabbitMQPassword" source="spring.rabbitmq.password" defaultValue="guest"/>
 
     <appender name="AMQP"
               class="org.springframework.amqp.rabbit.logback.AmqpAppender">
@@ -14,6 +16,8 @@
 
         <applicationId>gateway</applicationId>
         <host>${rabbitMQHost:-localhost}</host>
+        <username>${rabbitMQUsername}</username>
+        <password>${rabbitMQPassword}</password>
         <routingKeyPattern>%property{applicationId}.%p</routingKeyPattern>
         <exchangeName>logs.topic</exchangeName>
         <generateId>true</generateId>

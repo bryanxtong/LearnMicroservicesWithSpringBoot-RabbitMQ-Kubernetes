@@ -1,0 +1,44 @@
+# RabbitMQ Cluster CR — applied via kubectl in helmfile hooks
+# The Cluster Operator automatically creates Secret "rabbitmq-default-user"
+# with username/password keys consumed by Spring Boot services.
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: rabbitmq
+  namespace: microservices
+spec:
+  replicas: 1
+  image: rabbitmq:4.1.0-management
+  rabbitmq:
+    additionalPlugins:
+      - rabbitmq_management
+      - rabbitmq_peer_discovery_k8s
+    additionalConfig: |
+      vm_memory_high_watermark.relative = 0.6
+      vm_memory_high_watermark_paging_ratio = 0.5
+  # persistence disabled for local kind dev (emptyDir)
+  override:
+    statefulSet:
+      spec:
+        volumeClaimTemplates: []
+        template:
+          spec:
+            initContainers:
+              - name: setup-container
+                securityContext:
+                  readOnlyRootFilesystem: false
+            containers:
+              - name: rabbitmq
+                volumeMounts:
+                  - name: persistence
+                    mountPath: /var/lib/rabbitmq
+            volumes:
+              - name: persistence
+                emptyDir: {}
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi

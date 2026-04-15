@@ -1,0 +1,7 @@
+apiVersion: v2
+name: empty
+description: |
+  Empty chart used as a helmfile release anchor for pure kubectl hook operations.
+  Contains no templates — all work is done via helmfile presync/postsync hooks.
+type: application
+version: 0.1.0
