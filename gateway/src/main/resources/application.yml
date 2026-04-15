@@ -9,6 +9,7 @@ spring:
     consul:
       enabled: true
       discovery:
+        prefer-ip-address: true
         # Get only services that are passing the health check
         query-passing: true
       config:
@@ -20,6 +21,7 @@ spring:
           enabled: true
           delay: 3000
           wait-time: 5
+        fail-fast: true
     gateway:
       server:
         webflux:
@@ -85,6 +87,7 @@ spring:
                   - "POST"
                   - "OPTIONS"
                 allowCredentials: true
+
   rabbitmq:
     host: ${SPRING_RABBITMQ_HOST}
     username: ${SPRING_RABBITMQ_USERNAME}

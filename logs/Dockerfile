@@ -5,5 +5,5 @@ COPY ./opentelemetry-javaagent.jar /usr/src/app/
 WORKDIR /usr/src/app
 ENV JAVA_TOOL_OPTIONS=-javaagent:/usr/src/app/opentelemetry-javaagent.jar
 
-EXPOSE 8080
+EXPOSE 8580
 CMD ["java", "-jar", "logs-0.0.1-SNAPSHOT.jar"]

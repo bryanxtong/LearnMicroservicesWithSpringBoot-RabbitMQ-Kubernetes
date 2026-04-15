@@ -1,5 +1,7 @@
 class ChallengeApiClient {
-    static SERVER_URL = 'http://localhost:8000';
+    // k8s/kind: traffic goes through Ingress → /api prefix is stripped by nginx-ingress rewrite
+    // local dev: set REACT_APP_API_URL=http://localhost:8000 before npm start
+    static SERVER_URL = process.env.REACT_APP_API_URL || '/api';
     static GET_CHALLENGE = '/challenges/random';
     static POST_RESULT = '/attempts';
     static GET_ATTEMPTS_BY_ALIAS = '/attempts?alias=';

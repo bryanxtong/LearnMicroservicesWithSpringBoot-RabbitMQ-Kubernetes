@@ -7,5 +7,5 @@ WORKDIR /usr/src/app
 #ADD --chmod=644 https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar /usr/src/app/opentelemetry-javaagent.jar
 ENV JAVA_TOOL_OPTIONS=-javaagent:/usr/src/app/opentelemetry-javaagent.jar
 
-EXPOSE 8080
+EXPOSE 8000
 CMD ["java", "-jar", "gateway-0.0.1-SNAPSHOT.jar"]
