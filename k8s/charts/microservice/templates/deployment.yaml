@@ -113,12 +113,12 @@ spec:
         {{- end }}
         {{- if .Values.persistence.enabled }}
         - name: {{ .Values.persistence.volumeName }}
-        persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-pvc
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-pvc
         {{- end }}
         {{- range .Values.emptyDirVolumes }}
         - name: {{ .name }}
-        emptyDir: {}
+          emptyDir: {}
         {{- end }}
       {{- end }}
 {{- end }}
