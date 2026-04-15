@@ -23,7 +23,7 @@ ingress:
       service: consul-server
       port: 8500
     - path: /rabbitmq(/|$)(.*)
-      service: rabbitmq-server
+      service: rabbitmq
       port: 15672
     - path: /()(.*)
       service: frontend
