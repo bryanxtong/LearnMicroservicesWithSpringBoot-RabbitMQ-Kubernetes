@@ -1,0 +1,52 @@
+# No-Rewrite Ingress Configuration
+# Exposes services without path rewriting (services handle sub-paths themselves)
+# - /v1/* → Consul HTTP API
+# - /ui/* → Consul Web UI
+# - /consul/* → Consul Web UI (alternative path)
+# - /grafana/* → Grafana Web UI
+#
+# Note: No rewriteTarget is set because these services are configured to serve from sub-paths
+# - Consul expects /v1, /ui, /consul paths natively
+# - Grafana is configured with GF_SERVER_ROOT_URL="/grafana" and GF_SERVER_SERVE_FROM_SUB_PATH="true"
+
+image:
+  repository: nginx
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+workload:
+  type: Deployment
+
+service:
+  enabled: false
+
+ingress:
+  enabled: true
+  host: localhost
+  # Custom annotations for no-rewrite ingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+  paths:
+    - path: /v1(/|$)(.*)      # Consul HTTP API
+      service: consul-server
+      port: 8500
+    - path: /ui(/|$)(.*)      # Consul Web UI
+      service: consul-server
+      port: 8500
+    - path: /consul(/|$)(.*)  # Consul Web UI (alternative)
+      service: consul-server
+      port: 8500
+    - path: /grafana(/|$)(.*)  # Grafana Web UI
+      service: otel-lgtm
+      port: 3000
+
+env: {}
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi

@@ -1,4 +1,8 @@
 {{- if .Values.ingress.enabled }}
+# Generic Ingress Template
+# Supports both path rewriting and non-rewriting scenarios
+# - rewriteTarget: optional, only added if defined and non-empty
+# - annotations: optional, merged with default CORS settings
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -7,11 +11,24 @@ metadata:
   labels:
     app: {{ .Release.Name }}
   annotations:
+    # Default annotations for all ingresses
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-origin: "*"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS"
     nginx.ingress.kubernetes.io/cors-allow-headers: "Content-Type"
+    # Optional: rewrite-target annotation (only if rewriteTarget is set)
+    {{- if hasKey .Values.ingress "rewriteTarget" }}
+    {{- if .Values.ingress.rewriteTarget }}
+    nginx.ingress.kubernetes.io/rewrite-target: {{ .Values.ingress.rewriteTarget | quote }}
+    {{- end }}
+    {{- end }}
+    # Optional: custom annotations from values file
+    {{- if .Values.ingress.annotations }}
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- end }}
 spec:
   ingressClassName: nginx
   rules:

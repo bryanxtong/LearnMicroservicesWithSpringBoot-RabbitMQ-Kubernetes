@@ -125,6 +125,7 @@ releases:
       - microservices/gamification
 
   # ─── 7. Ingress Rules (centralized) ─────────────────────────────────────────
+  # Main ingress with path rewriting for backend services
   - name: ingress
     namespace: microservices
     chart: charts/microservice
@@ -132,7 +133,6 @@ releases:
       - values/ingress.yaml
     needs:
       - microservices/gateway
-      - microservices/otel-lgtm
       - microservices/consul
       - ingress-nginx/ingress-nginx
 
@@ -145,3 +145,16 @@ releases:
     needs:
       - microservices/gateway
       - ingress-nginx/ingress-nginx
+
+  # ─── 9. No-Rewrite Ingress ──────────────────────────────────────────────────
+  # Separate ingress for services that handle sub-paths themselves (no rewriting)
+  # Exposes: /v1/* /ui/* /consul/* (Consul), /grafana/* (Grafana)
+  - name: ingress-no-rewrite
+    namespace: microservices
+    chart: charts/microservice
+    values:
+      - values/ingress-no-rewrite.yaml
+    needs:
+      - microservices/consul
+      - microservices/otel-lgtm
+      - microservices/ingress

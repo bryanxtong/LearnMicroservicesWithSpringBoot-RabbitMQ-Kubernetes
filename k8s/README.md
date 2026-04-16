@@ -24,13 +24,13 @@ Supporting Services:
 
 ## Access Points
 
-| Service              | URL                                    |
-| :------------------- | :------------------------------------- |
-| Frontend             | http://localhost                       |
-| API Gateway          | http://localhost/api                   |
-| Grafana (otel-lgtm)  | http://localhost/grafana               |
-| Consul UI            | http://localhost/consul                |
-| RabbitMQ Management  | http://localhost/rabbitmq              |
+| Service              | URL                                    | Path Handling                          |
+| :------------------- | :------------------------------------- | :------------------------------------- |
+| Frontend             | http://localhost                       | No rewrite (catch-all)                 |
+| API Gateway          | http://localhost/api                   | Rewrite: `/api/*` → `/*`               |
+| Grafana (otel-lgtm)  | http://localhost/grafana               | No rewrite (has base path `/grafana`)  |
+| Consul UI            | http://localhost/consul                | No rewrite (has base path `/consul`)   |
+| RabbitMQ Management  | http://localhost/rabbitmq              | Rewrite: `/rabbitmq/*` → `/*`          |
 
 **Credentials:**
 - RabbitMQ: Username and password from `rabbitmq-default-user` Kubernetes Secret
@@ -43,7 +43,7 @@ Supporting Services:
 brew install kind helm helmfile kubectl
 
 # Or on Windows:
-# choco install kind kubernetes-helm helmfile kubectl
+choco install kind kubernetes-helm helmfile kubectl
 ```
 
 ## Deployment Steps
@@ -57,11 +57,29 @@ kind create cluster --name microservices --config k8s/kind-config.yaml
 ### 2. Build Docker images
 
 ```bash
-# Build services (requires mvn package -DskipTests first)
-docker build -t multiplication:0.0.1-SNAPSHOT multiplication/
-docker build -t gamification:0.0.1-SNAPSHOT   gamification/
-docker build -t gateway:0.0.1-SNAPSHOT        gateway/
-docker build -t logs:0.0.1-SNAPSHOT           logs/
+# Build multiplication service
+cd multiplication
+mvn clean  package -DskipTests
+docker build -t multiplication:0.0.1-SNAPSHOT .
+cd ..
+
+# Build gamification service
+cd gamification
+mvn clean package -DskipTests
+docker build -t gamification:0.0.1-SNAPSHOT .
+cd ..
+
+# Build gateway service
+cd gateway
+mvn clean package -DskipTests
+docker build -t gateway:0.0.1-SNAPSHOT .
+cd ..
+
+# Build logs service
+cd logs
+mvn clean package -DskipTests
+docker build -t logs:0.0.1-SNAPSHOT .
+cd ..
 
 # Build frontend (uses /api as API prefix, Ingress will rewrite it)
 cd challenges-frontend
@@ -79,11 +97,11 @@ cd ..
 ### 3. Load images into kind
 
 ```bash
-kind load docker-image multiplication:0.0.1-SNAPSHOT    --name microservices
-kind load docker-image gamification:0.0.1-SNAPSHOT     --name microservices
-kind load docker-image gateway:0.0.1-SNAPSHOT          --name microservices
-kind load docker-image logs:0.0.1-SNAPSHOT             --name microservices
-kind load docker-image challenges-frontend:1.0          --name microservices
+kind load docker-image multiplication:0.0.1-SNAPSHOT --name kind
+kind load docker-image gamification:0.0.1-SNAPSHOT --name kind
+kind load docker-image gateway:0.0.1-SNAPSHOT --name kind
+kind load docker-image logs:0.0.1-SNAPSHOT --name kind
+kind load docker-image challenges-frontend:1.0 --name kind
 ```
 
 ### 4. Deploy with Helmfile
@@ -111,14 +129,14 @@ helmfile status
 helmfile -l name=gateway sync
 
 # Update a service (after reloading image)
-helmfile -l name=multiplication apply
+helmfile -l name=multiplication sync
 
 # View service logs
 kubectl logs -n microservices deploy/multiplication -f
 
 # Clean up everything
 helmfile destroy
-kind delete cluster --name microservices
+kind delete cluster --name kind
 ```
 
 ## Important Notes
@@ -129,6 +147,13 @@ kind delete cluster --name microservices
 
 3. **Consul Configuration**: The `consul-importer` Job automatically imports configuration into Consul after it's ready (RabbitMQ host, Consul discovery instance-id).
 
-4. **Startup Time**: Spring Boot with OpenTelemetry agent takes time to start. Readiness probes have a 30-second initial delay.
+4. **Startup Time**: Spring Boot with OpenTelemetry agent takes time to start. Readiness probes have a 180-second (3 minutes) initial delay.
 
-5. **Ingress Configuration**: All Ingress rules are centralized in `k8s/values/ingress.yaml`. Each service (frontend, gateway, otel-lgtm, consul, rabbitmq) has equal architectural status through a single Ingress resource with multiple paths.
+5. **Ingress Configuration**: Ingress rules are split into two resources based on path rewriting requirements:
+   - `k8s/values/ingress.yaml` - Services that need path rewriting (gateway, rabbitmq, frontend)
+     - Uses `rewriteTarget: "/$2"` annotation to strip path prefixes
+     - Example: `/api/foo` → `/foo` before forwarding to gateway
+   - `k8s/values/ingress-no-rewrite.yaml` - Services that handle sub-paths themselves (consul, grafana)
+     - No rewriteTarget annotation, paths are forwarded as-is
+     - Consul expects `/v1`, `/ui`, `/consul` paths natively
+     - Grafana is configured with `GF_SERVER_ROOT_URL="/grafana"` to serve from sub-path
