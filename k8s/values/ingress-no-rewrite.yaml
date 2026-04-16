@@ -9,13 +9,9 @@
 # - Consul expects /v1, /ui, /consul paths natively
 # - Grafana is configured with GF_SERVER_ROOT_URL="/grafana" and GF_SERVER_SERVE_FROM_SUB_PATH="true"
 
-image:
-  repository: nginx
-  tag: "latest"
-  pullPolicy: IfNotPresent
-
+# Disable workload creation - this release only creates Ingress resources
 workload:
-  type: Deployment
+  type: ""
 
 service:
   enabled: false
