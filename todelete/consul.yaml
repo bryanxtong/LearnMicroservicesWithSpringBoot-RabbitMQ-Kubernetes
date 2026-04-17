@@ -1,0 +1,766 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      consul.hashicorp.com/config-checksum: 2fd55e875d52a4c7029542e94982a32e7d953a5914dade254eeb915c7ba5cb7c
+      consul.hashicorp.com/connect-inject: "false"
+      consul.hashicorp.com/mesh-inject: "false"
+      kubectl.kubernetes.io/restartedAt: "2026-04-15T17:50:46+08:00"
+    creationTimestamp: "2026-04-17T02:05:21Z"
+    generateName: consul-server-
+    generation: 1
+    labels:
+      app: consul
+      apps.kubernetes.io/pod-index: "0"
+      chart: consul-helm
+      component: server
+      controller-revision-hash: consul-server-64545f48dc
+      hasDNS: "true"
+      release: consul
+      statefulset.kubernetes.io/pod-name: consul-server-0
+    name: consul-server-0
+    namespace: microservices
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: StatefulSet
+      name: consul-server
+      uid: 2dcbada6-524f-476b-a59c-bf5782da8971
+    resourceVersion: "651197"
+    uid: a807ab70-3b65-4427-a08e-98a68bdfa7e5
+  spec:
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app: consul
+              component: server
+              release: consul
+          topologyKey: kubernetes.io/hostname
+    containers:
+    - command:
+      - /bin/sh
+      - -ec
+      - |2
+
+        cp /consul/tmp/extra-config/extra-from-values.json /consul/extra-config/extra-from-values.json
+        [ -n "${HOST_IP}" ] && sed -Ei "s|HOST_IP|${HOST_IP?}|g" /consul/extra-config/extra-from-values.json
+        [ -n "${POD_IP}" ] && sed -Ei "s|POD_IP|${POD_IP?}|g" /consul/extra-config/extra-from-values.json
+        [ -n "${HOSTNAME}" ] && sed -Ei "s|HOSTNAME|${HOSTNAME?}|g" /consul/extra-config/extra-from-values.json
+
+        exec /usr/local/bin/docker-entrypoint.sh consul agent \
+          -advertise="${ADVERTISE_IP}" \
+          -config-dir=/consul/config \
+          -config-dir=/consul/extra-config \
+      env:
+      - name: ADVERTISE_IP
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: status.podIP
+      - name: HOST_IP
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: status.hostIP
+      - name: POD_IP
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: status.podIP
+      - name: CONSUL_DISABLE_PERM_MGMT
+        value: "true"
+      image: hashicorp/consul:1.22.6
+      imagePullPolicy: IfNotPresent
+      name: consul
+      ports:
+      - containerPort: 8500
+        name: http
+        protocol: TCP
+      - containerPort: 8502
+        name: grpc
+        protocol: TCP
+      - containerPort: 8301
+        name: serflan-tcp
+        protocol: TCP
+      - containerPort: 8301
+        name: serflan-udp
+        protocol: UDP
+      - containerPort: 8302
+        name: serfwan-tcp
+        protocol: TCP
+      - containerPort: 8302
+        name: serfwan-udp
+        protocol: UDP
+      - containerPort: 8300
+        name: server
+        protocol: TCP
+      - containerPort: 8600
+        name: dns-tcp
+        protocol: TCP
+      - containerPort: 8600
+        name: dns-udp
+        protocol: UDP
+      readinessProbe:
+        exec:
+          command:
+          - /bin/sh
+          - -ec
+          - |
+            curl \
+              http://127.0.0.1:8500/v1/status/leader \
+            2>/dev/null | grep -E '".+"'
+        failureThreshold: 2
+        initialDelaySeconds: 5
+        periodSeconds: 3
+        successThreshold: 1
+        timeoutSeconds: 5
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 250m
+          memory: 256Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 100
+        seccompProfile:
+          type: RuntimeDefault
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /consul/data
+        name: data-microservices
+      - mountPath: /consul/config
+        name: config
+      - mountPath: /consul/extra-config
+        name: extra-config
+      - mountPath: /consul/tmp/extra-config
+        name: tmp-extra-config
+      - mountPath: /tmp
+        name: tmp
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-cbgs4
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    hostname: consul-server-0
+    initContainers:
+    - command:
+      - /bin/sh
+      - -ec
+      - |
+        exec consul-k8s-control-plane fetch-server-region -node-name "$NODE_NAME" -output-file /consul/extra-config/locality.json
+      env:
+      - name: NODE_NAME
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: spec.nodeName
+      image: hashicorp/consul-k8s-control-plane:1.9.6
+      imagePullPolicy: IfNotPresent
+      name: locality-init
+      resources: {}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 100
+        seccompProfile:
+          type: RuntimeDefault
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /consul/extra-config
+        name: extra-config
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-cbgs4
+        readOnly: true
+    nodeName: kind-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext:
+      fsGroup: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+      runAsUser: 100
+    serviceAccount: consul-server
+    serviceAccountName: consul-server
+    subdomain: consul-server
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - name: data-microservices
+      persistentVolumeClaim:
+        claimName: data-microservices-consul-server-0
+    - emptyDir: {}
+      name: tmp
+    - configMap:
+        defaultMode: 420
+        name: consul-server-config
+      name: config
+    - emptyDir: {}
+      name: extra-config
+    - configMap:
+        defaultMode: 420
+        name: consul-server-tmp-extra-config
+      name: tmp-extra-config
+    - name: kube-api-access-cbgs4
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T02:05:37Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T02:05:53Z"
+      observedGeneration: 1
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T06:53:40Z"
+      observedGeneration: 1
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T06:53:40Z"
+      observedGeneration: 1
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T02:05:23Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - allocatedResources:
+        cpu: 250m
+        memory: 256Mi
+      containerID: containerd://eca79ed8072eb01b5f2266b2ef0e0e1085209df766d17a0eba35b79cfe418dc6
+      image: docker.io/hashicorp/consul:1.22.6
+      imageID: docker.io/hashicorp/consul@sha256:f278b51842bc26129911cccefdfaed52118ae00f692bc42be030d5c66d2370c0
+      lastState: {}
+      name: consul
+      ready: true
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 250m
+          memory: 256Mi
+      restartCount: 0
+      started: true
+      state:
+        running:
+          startedAt: "2026-04-17T02:06:00Z"
+      user:
+        linux:
+          gid: 1000
+          supplementalGroups:
+          - 1000
+          uid: 100
+      volumeMounts:
+      - mountPath: /consul/data
+        name: data-microservices
+      - mountPath: /consul/config
+        name: config
+      - mountPath: /consul/extra-config
+        name: extra-config
+      - mountPath: /consul/tmp/extra-config
+        name: tmp-extra-config
+      - mountPath: /tmp
+        name: tmp
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-cbgs4
+        readOnly: true
+        recursiveReadOnly: Disabled
+    hostIP: 172.20.0.2
+    hostIPs:
+    - ip: 172.20.0.2
+    initContainerStatuses:
+    - containerID: containerd://b872a8fc5f8bf408201a857493f41ecd00653da60451c041a9ae4c14c9bf082c
+      image: docker.io/hashicorp/consul-k8s-control-plane:1.9.6
+      imageID: docker.io/hashicorp/consul-k8s-control-plane@sha256:800fa8135c9b56a4248054e426ded6c49d6c34649c01f8f2851572f811f8f09f
+      lastState: {}
+      name: locality-init
+      ready: true
+      resources: {}
+      restartCount: 0
+      started: false
+      state:
+        terminated:
+          containerID: containerd://b872a8fc5f8bf408201a857493f41ecd00653da60451c041a9ae4c14c9bf082c
+          exitCode: 0
+          finishedAt: "2026-04-17T02:05:49Z"
+          reason: Completed
+          startedAt: "2026-04-17T02:05:36Z"
+      user:
+        linux:
+          gid: 1000
+          supplementalGroups:
+          - 1000
+          uid: 100
+      volumeMounts:
+      - mountPath: /consul/extra-config
+        name: extra-config
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-cbgs4
+        readOnly: true
+        recursiveReadOnly: Disabled
+    observedGeneration: 1
+    phase: Running
+    podIP: 10.244.0.211
+    podIPs:
+    - ip: 10.244.0.211
+    qosClass: Burstable
+    startTime: "2026-04-17T02:05:24Z"
+- apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: consul
+      meta.helm.sh/release-namespace: microservices
+    creationTimestamp: "2026-04-14T13:05:15Z"
+    generation: 5
+    labels:
+      app: consul
+      app.kubernetes.io/managed-by: Helm
+      chart: consul-helm
+      component: server
+      heritage: Helm
+      release: consul
+    name: consul-server
+    namespace: microservices
+    resourceVersion: "651204"
+    uid: 2dcbada6-524f-476b-a59c-bf5782da8971
+  spec:
+    persistentVolumeClaimRetentionPolicy:
+      whenDeleted: Retain
+      whenScaled: Retain
+    podManagementPolicy: Parallel
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: consul
+        chart: consul-helm
+        component: server
+        hasDNS: "true"
+        release: consul
+    serviceName: consul-server
+    template:
+      metadata:
+        annotations:
+          consul.hashicorp.com/config-checksum: 2fd55e875d52a4c7029542e94982a32e7d953a5914dade254eeb915c7ba5cb7c
+          consul.hashicorp.com/connect-inject: "false"
+          consul.hashicorp.com/mesh-inject: "false"
+          kubectl.kubernetes.io/restartedAt: "2026-04-15T17:50:46+08:00"
+        labels:
+          app: consul
+          chart: consul-helm
+          component: server
+          hasDNS: "true"
+          release: consul
+      spec:
+        affinity:
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: consul
+                  component: server
+                  release: consul
+              topologyKey: kubernetes.io/hostname
+        containers:
+        - command:
+          - /bin/sh
+          - -ec
+          - |2
+
+            cp /consul/tmp/extra-config/extra-from-values.json /consul/extra-config/extra-from-values.json
+            [ -n "${HOST_IP}" ] && sed -Ei "s|HOST_IP|${HOST_IP?}|g" /consul/extra-config/extra-from-values.json
+            [ -n "${POD_IP}" ] && sed -Ei "s|POD_IP|${POD_IP?}|g" /consul/extra-config/extra-from-values.json
+            [ -n "${HOSTNAME}" ] && sed -Ei "s|HOSTNAME|${HOSTNAME?}|g" /consul/extra-config/extra-from-values.json
+
+            exec /usr/local/bin/docker-entrypoint.sh consul agent \
+              -advertise="${ADVERTISE_IP}" \
+              -config-dir=/consul/config \
+              -config-dir=/consul/extra-config \
+          env:
+          - name: ADVERTISE_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: HOST_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.hostIP
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: CONSUL_DISABLE_PERM_MGMT
+            value: "true"
+          image: hashicorp/consul:1.22.6
+          imagePullPolicy: IfNotPresent
+          name: consul
+          ports:
+          - containerPort: 8500
+            name: http
+            protocol: TCP
+          - containerPort: 8502
+            name: grpc
+            protocol: TCP
+          - containerPort: 8301
+            name: serflan-tcp
+            protocol: TCP
+          - containerPort: 8301
+            name: serflan-udp
+            protocol: UDP
+          - containerPort: 8302
+            name: serfwan-tcp
+            protocol: TCP
+          - containerPort: 8302
+            name: serfwan-udp
+            protocol: UDP
+          - containerPort: 8300
+            name: server
+            protocol: TCP
+          - containerPort: 8600
+            name: dns-tcp
+            protocol: TCP
+          - containerPort: 8600
+            name: dns-udp
+            protocol: UDP
+          readinessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -ec
+              - |
+                curl \
+                  http://127.0.0.1:8500/v1/status/leader \
+                2>/dev/null | grep -E '".+"'
+            failureThreshold: 2
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 100
+            seccompProfile:
+              type: RuntimeDefault
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /consul/data
+            name: data-microservices
+          - mountPath: /consul/config
+            name: config
+          - mountPath: /consul/extra-config
+            name: extra-config
+          - mountPath: /consul/tmp/extra-config
+            name: tmp-extra-config
+          - mountPath: /tmp
+            name: tmp
+        dnsPolicy: ClusterFirst
+        initContainers:
+        - command:
+          - /bin/sh
+          - -ec
+          - |
+            exec consul-k8s-control-plane fetch-server-region -node-name "$NODE_NAME" -output-file /consul/extra-config/locality.json
+          env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: spec.nodeName
+          image: hashicorp/consul-k8s-control-plane:1.9.6
+          imagePullPolicy: IfNotPresent
+          name: locality-init
+          resources: {}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 100
+            seccompProfile:
+              type: RuntimeDefault
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /consul/extra-config
+            name: extra-config
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 100
+        serviceAccount: consul-server
+        serviceAccountName: consul-server
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: tmp
+        - configMap:
+            defaultMode: 420
+            name: consul-server-config
+          name: config
+        - emptyDir: {}
+          name: extra-config
+        - configMap:
+            defaultMode: 420
+            name: consul-server-tmp-extra-config
+          name: tmp-extra-config
+    updateStrategy:
+      rollingUpdate:
+        maxUnavailable: 1
+        partition: 0
+      type: RollingUpdate
+    volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: data-microservices
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        volumeMode: Filesystem
+      status:
+        phase: Pending
+  status:
+    availableReplicas: 1
+    collisionCount: 0
+    currentReplicas: 1
+    currentRevision: consul-server-64545f48dc
+    observedGeneration: 5
+    readyReplicas: 1
+    replicas: 1
+    updateRevision: consul-server-64545f48dc
+    updatedReplicas: 1
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: consul
+      meta.helm.sh/release-namespace: microservices
+    creationTimestamp: "2026-04-14T13:05:13Z"
+    labels:
+      app: consul
+      app.kubernetes.io/managed-by: Helm
+      chart: consul-helm
+      component: dns
+      heritage: Helm
+      release: consul
+    name: consul-dns
+    namespace: microservices
+    resourceVersion: "397251"
+    uid: f9aa25f3-39b3-4cbf-b384-40b2544d2c38
+  spec:
+    clusterIP: 10.96.57.54
+    clusterIPs:
+    - 10.96.57.54
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: dns-tcp
+      port: 53
+      protocol: TCP
+      targetPort: dns-tcp
+    - name: dns-udp
+      port: 53
+      protocol: UDP
+      targetPort: dns-udp
+    selector:
+      app: consul
+      hasDNS: "true"
+      release: consul
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: consul
+      meta.helm.sh/release-namespace: microservices
+    creationTimestamp: "2026-04-14T13:05:13Z"
+    labels:
+      app: consul
+      app.kubernetes.io/managed-by: Helm
+      chart: consul-helm
+      component: server
+      heritage: Helm
+      release: consul
+    name: consul-server
+    namespace: microservices
+    resourceVersion: "397248"
+    uid: 792f907a-38e6-4c81-aec6-b24dcc3e9fef
+  spec:
+    clusterIP: None
+    clusterIPs:
+    - None
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8500
+      protocol: TCP
+      targetPort: 8500
+    - name: grpc
+      port: 8502
+      protocol: TCP
+      targetPort: 8502
+    - name: serflan-tcp
+      port: 8301
+      protocol: TCP
+      targetPort: 8301
+    - name: serflan-udp
+      port: 8301
+      protocol: UDP
+      targetPort: 8301
+    - name: serfwan-tcp
+      port: 8302
+      protocol: TCP
+      targetPort: 8302
+    - name: serfwan-udp
+      port: 8302
+      protocol: UDP
+      targetPort: 8302
+    - name: server
+      port: 8300
+      protocol: TCP
+      targetPort: 8300
+    - name: dns-tcp
+      port: 8600
+      protocol: TCP
+      targetPort: dns-tcp
+    - name: dns-udp
+      port: 8600
+      protocol: UDP
+      targetPort: dns-udp
+    publishNotReadyAddresses: true
+    selector:
+      app: consul
+      component: server
+      release: consul
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: consul
+      meta.helm.sh/release-namespace: microservices
+    creationTimestamp: "2026-04-14T13:05:13Z"
+    labels:
+      app: consul
+      app.kubernetes.io/managed-by: Helm
+      chart: consul-helm
+      component: ui
+      heritage: Helm
+      release: consul
+    name: consul-ui
+    namespace: microservices
+    resourceVersion: "397261"
+    uid: 889dde08-0cf5-4201-b663-43ae8ea3bc49
+  spec:
+    clusterIP: 10.96.246.2
+    clusterIPs:
+    - 10.96.246.2
+    externalTrafficPolicy: Cluster
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      nodePort: 30850
+      port: 80
+      protocol: TCP
+      targetPort: 8500
+    selector:
+      app: consul
+      component: server
+      release: consul
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}
+kind: List
+metadata:
+  resourceVersion: ""

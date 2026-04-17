@@ -1,0 +1,99 @@
+apiVersion: v1
+items:
+- apiVersion: rabbitmq.com/v1beta1
+  kind: RabbitmqCluster
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"rabbitmq.com/v1beta1","kind":"RabbitmqCluster","metadata":{"annotations":{},"name":"rabbitmq","namespace":"microservices"},"spec":{"image":"rabbitmq:4.1.0-management","override":{"statefulSet":{"spec":{"template":{"spec":{"containers":[{"name":"rabbitmq","volumeMounts":[{"mountPath":"/var/lib/rabbitmq","name":"persistence"}]}],"initContainers":[{"name":"setup-container","securityContext":{"readOnlyRootFilesystem":false}}],"volumes":[{"emptyDir":{},"name":"persistence"}]}},"volumeClaimTemplates":[]}}},"rabbitmq":{"additionalConfig":"vm_memory_high_watermark.relative = 0.6\nvm_memory_high_watermark_paging_ratio = 0.5\n","additionalPlugins":["rabbitmq_management","rabbitmq_peer_discovery_k8s"]},"replicas":1,"resources":{"limits":{"cpu":"500m","memory":"1Gi"},"requests":{"cpu":"200m","memory":"512Mi"}}}}
+    creationTimestamp: "2026-04-14T03:42:26Z"
+    finalizers:
+    - deletion.finalizers.rabbitmqclusters.rabbitmq.com
+    generation: 14
+    name: rabbitmq
+    namespace: microservices
+    resourceVersion: "472436"
+    uid: 36a194aa-1d93-4370-ab6f-18e4a3102e13
+  spec:
+    delayStartSeconds: 30
+    image: rabbitmq:4.1.0-management
+    override:
+      statefulSet:
+        spec:
+          template:
+            spec:
+              containers:
+              - name: rabbitmq
+                resources: {}
+                volumeMounts:
+                - mountPath: /var/lib/rabbitmq
+                  name: persistence
+              initContainers:
+              - name: setup-container
+                resources: {}
+                securityContext:
+                  readOnlyRootFilesystem: false
+              volumes:
+              - emptyDir: {}
+                name: persistence
+    persistence:
+      storage: 10Gi
+    rabbitmq:
+      additionalConfig: |
+        vm_memory_high_watermark.relative = 0.6
+        vm_memory_high_watermark_paging_ratio = 0.5
+      additionalPlugins:
+      - rabbitmq_management
+      - rabbitmq_peer_discovery_k8s
+    replicas: 1
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 512Mi
+    secretBackend:
+      externalSecret:
+        name: ""
+    service:
+      type: ClusterIP
+    terminationGracePeriodSeconds: 604800
+    tls: {}
+  status:
+    binding:
+      name: rabbitmq-default-user
+    conditions:
+    - lastTransitionTime: "2026-04-15T09:33:44Z"
+      reason: AllPodsAreReady
+      status: "True"
+      type: AllReplicasReady
+    - lastTransitionTime: "2026-04-15T09:32:50Z"
+      reason: AtLeastOneEndpointAvailable
+      status: "True"
+      type: ClusterAvailable
+    - lastTransitionTime: "2026-04-14T03:42:44Z"
+      message: RabbitMQ container memory resource request and limit must be equal
+      reason: MemoryRequestAndLimitDifferent
+      status: "False"
+      type: NoWarnings
+    - lastTransitionTime: "2026-04-14T04:23:23Z"
+      message: Finish reconciling
+      reason: Success
+      status: "True"
+      type: ReconcileSuccess
+    defaultUser:
+      secretReference:
+        keys:
+          password: password
+          username: username
+        name: rabbitmq-default-user
+        namespace: microservices
+      serviceReference:
+        name: rabbitmq
+        namespace: microservices
+    observedGeneration: 14
+    quorumStatus: ok
+kind: List
+metadata:
+  resourceVersion: ""

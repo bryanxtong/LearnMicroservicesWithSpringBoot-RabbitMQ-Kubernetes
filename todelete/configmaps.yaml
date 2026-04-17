@@ -1,0 +1,208 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  data:
+    application.yaml: |
+      spring:
+        cloud:
+          consul:
+            discovery:
+              instance-id: ${spring.application.name}:${spring.cloud.client.ip-address}:${server.port}
+              deregister: true
+              health-check-critical-timeout: 30s
+  kind: ConfigMap
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: consul-importer
+      meta.helm.sh/release-namespace: microservices
+    creationTimestamp: "2026-04-13T06:44:16Z"
+    labels:
+      app: consul-importer
+      app.kubernetes.io/managed-by: Helm
+    name: consul-importer-config
+    namespace: microservices
+    resourceVersion: "633976"
+    uid: c2bc959c-7685-491c-8f56-02a4be8740b4
+- apiVersion: v1
+  data:
+    central-config.json: |-
+      {
+        "enable_central_service_config": true
+      }
+    server.json: |
+      {
+        "bind_addr": "0.0.0.0",
+        "bootstrap_expect": 1,
+        "client_addr": "0.0.0.0",
+        "connect": {
+          "enabled": true
+        },
+        "datacenter": "dc1",
+        "data_dir": "/consul/data",
+        "enable_debug": false,
+        "domain": "consul",
+        "limits": {
+          "request_limits": {
+            "mode": "disabled",
+            "read_rate": -1,
+            "write_rate": -1
+          }
+        },
+        "ports": {
+          "grpc": 8502,
+          "grpc_tls": -1,
+          "serf_lan": 8301
+        },
+        "recursors": [],
+        "retry_join": ["consul-server.microservices.svc:8301"],
+        "server": true,
+        "leave_on_terminate": true,
+        "autopilot": {
+          "min_quorum": 1,
+          "disable_upgrade_migration": true
+        }
+      }
+    ui-config.json: |-
+      {
+        "ui_config": {
+          "enabled": true
+        }
+      }
+  kind: ConfigMap
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: consul
+      meta.helm.sh/release-namespace: microservices
+    creationTimestamp: "2026-04-14T13:05:10Z"
+    labels:
+      app: consul
+      app.kubernetes.io/managed-by: Helm
+      chart: consul-helm
+      component: server
+      heritage: Helm
+      release: consul
+    name: consul-server-config
+    namespace: microservices
+    resourceVersion: "397238"
+    uid: f9f9f29a-a381-4ab2-a75d-6cff6a95ef09
+- apiVersion: v1
+  data:
+    extra-from-values.json: |-
+      {
+        "ui_config": {
+          "enabled": true
+        }
+      }
+  kind: ConfigMap
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: consul
+      meta.helm.sh/release-namespace: microservices
+    creationTimestamp: "2026-04-14T13:05:10Z"
+    labels:
+      app: consul
+      app.kubernetes.io/managed-by: Helm
+      chart: consul-helm
+      component: server
+      heritage: Helm
+      release: consul
+    name: consul-server-tmp-extra-config
+    namespace: microservices
+    resourceVersion: "464957"
+    uid: 03dd6c96-59a5-4d15-98cb-521be81af289
+- apiVersion: v1
+  data:
+    ca.crt: |
+      -----BEGIN CERTIFICATE-----
+      MIIDBTCCAe2gAwIBAgIIV/OATr2aw48wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA0MDgwMTE2MzdaFw0zNjA0MDUwMTIxMzdaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQC6QXSCRQJyqtcH/c65u8N3mKLu7F9JUIwy1i7louDxSdfiOqEwN1HxVC5r
+      72QjSJU8Xaga5S0vG8ZDfQhdFrz13TeypDy86hbrVMKBa/Lz1stOZNCTRohlTdGl
+      0PQ4HiYn49urSUPoCANOeoQYdHUL5399M7jfN8bnoIuIECpGnl466TgyKqs7RVY9
+      faw6wk1ZhoJ8szXlnBMgoGayDHGRk/nq2xE37bUH30XVK82W1GuXEphzOXj4pgNT
+      lSuhkGCbuoIYXq6WTTfBVQ+s5rnG0fohXIgtV5Nt9RRkNekw0HIaZbykPC2vDRrY
+      ySnL67a5t8KvmHWsqschpTaEdWaLAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQtN2SzrOJVJ0zw8WEDzQ50bcIzTTAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQCchvQexglD
+      VhnLeLaQ02bzIKQxam42nsR/nXAV61katiCsmeETKw1Jfu4zyXb82muvj4n3K165
+      W5Uzhr4CA59Tfy+86sRd253KlhoYGm59WoI4rt6b0I4qbmhG6uHHzzIh9xTl6kfc
+      uVAxyFWO7hhHT/lZZ1jBGBp7i/NEVbCXsMxJfDATH7Da1VqROyiIlVjTLZR82T+W
+      Waxr3wF/zsbwYpzWrdoNIdwg9VdSktZpQiOh4cum7rPpM6A8wFDripYc7wx2Nof+
+      GX/vGrKTJqMlTHjyvOFOdGwiTO4pJzyXD9GgK6+Q1N7n6lO3yFx4qxonxYUokR3q
+      I4ntylitLzDm
+      -----END CERTIFICATE-----
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubernetes.io/description: Contains a CA bundle that can be used to verify the
+        kube-apiserver when using internal endpoints such as the internal service
+        IP or kubernetes.default.svc. No other usage is guaranteed across distributions
+        of Kubernetes clusters.
+    creationTimestamp: "2026-04-13T06:21:04Z"
+    name: kube-root-ca.crt
+    namespace: microservices
+    resourceVersion: "298535"
+    uid: 50ae2432-19da-4516-a2db-c771088da239
+- apiVersion: v1
+  data:
+    enabled_plugins: '[rabbitmq_peer_discovery_k8s,rabbitmq_prometheus,rabbitmq_management].'
+  kind: ConfigMap
+  metadata:
+    creationTimestamp: "2026-04-14T03:42:33Z"
+    labels:
+      app.kubernetes.io/component: rabbitmq
+      app.kubernetes.io/name: rabbitmq
+      app.kubernetes.io/part-of: rabbitmq
+    name: rabbitmq-plugins-conf
+    namespace: microservices
+    ownerReferences:
+    - apiVersion: rabbitmq.com/v1beta1
+      blockOwnerDeletion: true
+      controller: true
+      kind: RabbitmqCluster
+      name: rabbitmq
+      uid: 36a194aa-1d93-4370-ab6f-18e4a3102e13
+    resourceVersion: "357262"
+    uid: bd99ec93-606b-4842-8703-82485492b0c4
+- apiVersion: v1
+  data:
+    operatorDefaults.conf: |
+      log.console                                = true
+      queue_master_locator                       = min-masters
+      disk_free_limit.absolute                   = 2GB
+      cluster_partition_handling                 = pause_minority
+      cluster_formation.peer_discovery_backend   = rabbit_peer_discovery_k8s
+      cluster_formation.k8s.host                 = kubernetes.default
+      cluster_formation.k8s.address_type         = hostname
+      cluster_formation.target_cluster_size_hint = 1
+      cluster_name                               = rabbitmq
+      auth_mechanisms.1                          = PLAIN
+      auth_mechanisms.2                          = AMQPLAIN
+    userDefinedConfiguration.conf: |
+      total_memory_available_override_value = 858993460
+      vm_memory_high_watermark.relative     = 0.6
+      vm_memory_high_watermark_paging_ratio = 0.5
+  kind: ConfigMap
+  metadata:
+    annotations:
+      rabbitmq.com/serverConfUpdatedAt: "2026-04-15T09:28:27Z"
+    creationTimestamp: "2026-04-14T03:42:33Z"
+    labels:
+      app.kubernetes.io/component: rabbitmq
+      app.kubernetes.io/name: rabbitmq
+      app.kubernetes.io/part-of: rabbitmq
+    name: rabbitmq-server-conf
+    namespace: microservices
+    ownerReferences:
+    - apiVersion: rabbitmq.com/v1beta1
+      blockOwnerDeletion: true
+      controller: true
+      kind: RabbitmqCluster
+      name: rabbitmq
+      uid: 36a194aa-1d93-4370-ab6f-18e4a3102e13
+    resourceVersion: "461291"
+    uid: f26b5ae4-c976-48c4-999e-2e01402c4254
+kind: List
+metadata:
+  resourceVersion: ""

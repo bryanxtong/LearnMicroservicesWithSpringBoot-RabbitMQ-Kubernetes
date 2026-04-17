@@ -1,0 +1,118 @@
+apiVersion: v1
+items:
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"nginx.ingress.kubernetes.io/rewrite-target":"/$2","nginx.ingress.kubernetes.io/use-regex":"true"},"name":"ingress","namespace":"microservices"},"spec":{"ingressClassName":"nginx","rules":[{"host":"localhost","http":{"paths":[{"backend":{"service":{"name":"gateway","port":{"number":8000}}},"path":"/api(/|$)(.*)","pathType":"Prefix"},{"backend":{"service":{"name":"rabbitmq","port":{"number":15672}}},"path":"/rabbitmq(/|$)(.*)","pathType":"Prefix"},{"backend":{"service":{"name":"frontend","port":{"number":80}}},"path":"/","pathType":"Prefix"}]}}]}}
+      meta.helm.sh/release-name: ingress
+      meta.helm.sh/release-namespace: microservices
+      nginx.ingress.kubernetes.io/cors-allow-headers: Content-Type
+      nginx.ingress.kubernetes.io/cors-allow-methods: GET, POST, OPTIONS
+      nginx.ingress.kubernetes.io/cors-allow-origin: '*'
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      nginx.ingress.kubernetes.io/use-regex: "true"
+    creationTimestamp: "2026-04-17T00:50:28Z"
+    generation: 4
+    labels:
+      app: ingress
+      app.kubernetes.io/managed-by: Helm
+    name: ingress
+    namespace: microservices
+    resourceVersion: "625687"
+    uid: 76066375-63b4-470c-aace-fead26629cce
+  spec:
+    ingressClassName: nginx
+    rules:
+    - host: localhost
+      http:
+        paths:
+        - backend:
+            service:
+              name: gateway
+              port:
+                number: 8000
+          path: /api(/|$)(.*)
+          pathType: ImplementationSpecific
+        - backend:
+            service:
+              name: rabbitmq
+              port:
+                number: 15672
+          path: /rabbitmq(/|$)(.*)
+          pathType: ImplementationSpecific
+        - backend:
+            service:
+              name: consul-server
+              port:
+                number: 8500
+          path: /consul(/|$)(.*)
+          pathType: ImplementationSpecific
+        - backend:
+            service:
+              name: frontend
+              port:
+                number: 80
+          path: /()(.*)
+          pathType: ImplementationSpecific
+  status:
+    loadBalancer:
+      ingress:
+      - ip: 10.96.143.130
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: ingress-no-rewrite
+      meta.helm.sh/release-namespace: microservices
+      nginx.ingress.kubernetes.io/cors-allow-headers: Content-Type
+      nginx.ingress.kubernetes.io/cors-allow-methods: GET, POST, OPTIONS
+      nginx.ingress.kubernetes.io/cors-allow-origin: '*'
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/ssl-redirect: "false"
+      nginx.ingress.kubernetes.io/use-regex: "true"
+    creationTimestamp: "2026-04-15T23:55:07Z"
+    generation: 2
+    labels:
+      app: ingress-no-rewrite
+      app.kubernetes.io/managed-by: Helm
+    name: ingress-no-rewrite
+    namespace: microservices
+    resourceVersion: "625518"
+    uid: c1b7a386-7656-403b-ac70-4a52e18e7d0a
+  spec:
+    ingressClassName: nginx
+    rules:
+    - host: localhost
+      http:
+        paths:
+        - backend:
+            service:
+              name: consul-server
+              port:
+                number: 8500
+          path: /v1(/|$)(.*)
+          pathType: ImplementationSpecific
+        - backend:
+            service:
+              name: consul-server
+              port:
+                number: 8500
+          path: /ui(/|$)(.*)
+          pathType: ImplementationSpecific
+        - backend:
+            service:
+              name: otel-lgtm
+              port:
+                number: 3000
+          path: /grafana(/|$)(.*)
+          pathType: ImplementationSpecific
+  status:
+    loadBalancer:
+      ingress:
+      - ip: 10.96.143.130
+kind: List
+metadata:
+  resourceVersion: ""

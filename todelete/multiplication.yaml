@@ -1,0 +1,558 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/restartedAt: "2026-04-17T12:53:07+08:00"
+    creationTimestamp: "2026-04-17T04:53:09Z"
+    generateName: multiplication-68bbbfc76d-
+    generation: 1
+    labels:
+      app: multiplication
+      pod-template-hash: 68bbbfc76d
+    name: multiplication-68bbbfc76d-tf7h6
+    namespace: microservices
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ReplicaSet
+      name: multiplication-68bbbfc76d
+      uid: a4c3f7a5-88ee-4ccc-95e5-ed1b6aa324e5
+    resourceVersion: "651276"
+    uid: 82bd6be5-3acf-42e4-9342-267df1c7f51a
+  spec:
+    containers:
+    - env:
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://otel-lgtm:4318
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: http/protobuf
+      - name: OTEL_SERVICE_NAME
+        value: multiplication
+      - name: SPRING_CLOUD_CONSUL_HOST
+        value: consul-server
+      - name: SPRING_PROFILES_ACTIVE
+        value: kubernetes
+      - name: SPRING_RABBITMQ_HOST
+        value: rabbitmq
+      - name: SPRING_RABBITMQ_USERNAME
+        valueFrom:
+          secretKeyRef:
+            key: username
+            name: rabbitmq-default-user
+      - name: SPRING_RABBITMQ_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: password
+            name: rabbitmq-default-user
+      image: multiplication:0.0.1-SNAPSHOT
+      imagePullPolicy: IfNotPresent
+      livenessProbe:
+        failureThreshold: 10
+        httpGet:
+          path: /actuator/health
+          port: 8080
+          scheme: HTTP
+        initialDelaySeconds: 180
+        periodSeconds: 15
+        successThreshold: 1
+        timeoutSeconds: 30
+      name: multiplication
+      ports:
+      - containerPort: 8080
+        protocol: TCP
+      readinessProbe:
+        failureThreshold: 10
+        httpGet:
+          path: /actuator/health
+          port: 8080
+          scheme: HTTP
+        initialDelaySeconds: 180
+        periodSeconds: 15
+        successThreshold: 1
+        timeoutSeconds: 30
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-mt8wz
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: kind-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext: {}
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - name: kube-api-access-mt8wz
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T04:54:06Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T04:53:18Z"
+      observedGeneration: 1
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T04:53:18Z"
+      message: 'containers with unready status: [multiplication]'
+      observedGeneration: 1
+      reason: ContainersNotReady
+      status: "False"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T04:53:18Z"
+      message: 'containers with unready status: [multiplication]'
+      observedGeneration: 1
+      reason: ContainersNotReady
+      status: "False"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T04:53:11Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - allocatedResources:
+        cpu: 100m
+        memory: 256Mi
+      containerID: containerd://a35409af54fcd2c0e579043b17f1488132c0d1b3e6c2babd82c991c58c74723f
+      image: docker.io/library/multiplication:0.0.1-SNAPSHOT
+      imageID: sha256:be54212353ef4334848aa1bb2f36e8ae011b3c1a537b4eaea3c33029449bbb0b
+      lastState:
+        terminated:
+          containerID: containerd://2a89fb8efb1d9f441fe99761ca5506df9054b9fd96c1f07a9bc363848db2ca5c
+          exitCode: 143
+          finishedAt: "2026-04-17T06:54:39Z"
+          reason: Error
+          startedAt: "2026-04-17T06:49:04Z"
+      name: multiplication
+      ready: false
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      restartCount: 21
+      started: true
+      state:
+        running:
+          startedAt: "2026-04-17T06:54:49Z"
+      user:
+        linux:
+          gid: 0
+          supplementalGroups:
+          - 0
+          uid: 0
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-mt8wz
+        readOnly: true
+        recursiveReadOnly: Disabled
+    hostIP: 172.20.0.2
+    hostIPs:
+    - ip: 172.20.0.2
+    observedGeneration: 1
+    phase: Running
+    podIP: 10.244.0.238
+    podIPs:
+    - ip: 10.244.0.238
+    qosClass: Burstable
+    startTime: "2026-04-17T04:53:18Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/restartedAt: "2026-04-17T12:11:33+08:00"
+    creationTimestamp: "2026-04-17T04:11:35Z"
+    generateName: multiplication-7c69885bbf-
+    generation: 1
+    labels:
+      app: multiplication
+      pod-template-hash: 7c69885bbf
+    name: multiplication-7c69885bbf-rvkf7
+    namespace: microservices
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ReplicaSet
+      name: multiplication-7c69885bbf
+      uid: 460deca9-1d20-404d-8f57-35e851579dd3
+    resourceVersion: "636554"
+    uid: fc7f6202-8e86-4008-adf2-77847c6264b5
+  spec:
+    containers:
+    - env:
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://otel-lgtm:4318
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: http/protobuf
+      - name: OTEL_SERVICE_NAME
+        value: multiplication
+      - name: SPRING_CLOUD_CONSUL_HOST
+        value: consul-server
+      - name: SPRING_PROFILES_ACTIVE
+        value: kubernetes
+      - name: SPRING_RABBITMQ_HOST
+        value: rabbitmq
+      - name: SPRING_RABBITMQ_USERNAME
+        valueFrom:
+          secretKeyRef:
+            key: username
+            name: rabbitmq-default-user
+      - name: SPRING_RABBITMQ_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: password
+            name: rabbitmq-default-user
+      image: multiplication:0.0.1-SNAPSHOT
+      imagePullPolicy: IfNotPresent
+      livenessProbe:
+        failureThreshold: 10
+        httpGet:
+          path: /actuator/health
+          port: 8080
+          scheme: HTTP
+        initialDelaySeconds: 180
+        periodSeconds: 15
+        successThreshold: 1
+        timeoutSeconds: 30
+      name: multiplication
+      ports:
+      - containerPort: 8080
+        protocol: TCP
+      readinessProbe:
+        failureThreshold: 10
+        httpGet:
+          path: /actuator/health
+          port: 8080
+          scheme: HTTP
+        initialDelaySeconds: 180
+        periodSeconds: 15
+        successThreshold: 1
+        timeoutSeconds: 30
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-s5g6m
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: kind-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext: {}
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - name: kube-api-access-s5g6m
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T04:12:05Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T04:11:39Z"
+      observedGeneration: 1
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T04:15:11Z"
+      observedGeneration: 1
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T04:15:11Z"
+      observedGeneration: 1
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-17T04:11:38Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - allocatedResources:
+        cpu: 100m
+        memory: 256Mi
+      containerID: containerd://a44fba09bbdebeb18105db592713efba0f362241ccc877cd4536396c7a827e0a
+      image: docker.io/library/multiplication:0.0.1-SNAPSHOT
+      imageID: sha256:be54212353ef4334848aa1bb2f36e8ae011b3c1a537b4eaea3c33029449bbb0b
+      lastState: {}
+      name: multiplication
+      ready: true
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      restartCount: 0
+      started: true
+      state:
+        running:
+          startedAt: "2026-04-17T04:12:03Z"
+      user:
+        linux:
+          gid: 0
+          supplementalGroups:
+          - 0
+          uid: 0
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-s5g6m
+        readOnly: true
+        recursiveReadOnly: Disabled
+    hostIP: 172.20.0.2
+    hostIPs:
+    - ip: 172.20.0.2
+    observedGeneration: 1
+    phase: Running
+    podIP: 10.244.0.224
+    podIPs:
+    - ip: 10.244.0.224
+    qosClass: Burstable
+    startTime: "2026-04-17T04:11:39Z"
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "14"
+      meta.helm.sh/release-name: multiplication
+      meta.helm.sh/release-namespace: microservices
+    creationTimestamp: "2026-04-14T09:51:18Z"
+    generation: 15
+    labels:
+      app: multiplication
+      app.kubernetes.io/managed-by: Helm
+    name: multiplication
+    namespace: microservices
+    resourceVersion: "641684"
+    uid: 46f68346-dfdc-4683-a268-f20a528523cd
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: multiplication
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-04-17T12:53:07+08:00"
+        labels:
+          app: multiplication
+      spec:
+        containers:
+        - env:
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: http://otel-lgtm:4318
+          - name: OTEL_EXPORTER_OTLP_PROTOCOL
+            value: http/protobuf
+          - name: OTEL_SERVICE_NAME
+            value: multiplication
+          - name: SPRING_CLOUD_CONSUL_HOST
+            value: consul-server
+          - name: SPRING_PROFILES_ACTIVE
+            value: kubernetes
+          - name: SPRING_RABBITMQ_HOST
+            value: rabbitmq
+          - name: SPRING_RABBITMQ_USERNAME
+            valueFrom:
+              secretKeyRef:
+                key: username
+                name: rabbitmq-default-user
+          - name: SPRING_RABBITMQ_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: password
+                name: rabbitmq-default-user
+          image: multiplication:0.0.1-SNAPSHOT
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 10
+            httpGet:
+              path: /actuator/health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 180
+            periodSeconds: 15
+            successThreshold: 1
+            timeoutSeconds: 30
+          name: multiplication
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 10
+            httpGet:
+              path: /actuator/health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 180
+            periodSeconds: 15
+            successThreshold: 1
+            timeoutSeconds: 30
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-04-17T02:16:03Z"
+      lastUpdateTime: "2026-04-17T02:16:03Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-04-17T05:04:06Z"
+      lastUpdateTime: "2026-04-17T05:04:06Z"
+      message: ReplicaSet "multiplication-68bbbfc76d" has timed out progressing.
+      reason: ProgressDeadlineExceeded
+      status: "False"
+      type: Progressing
+    observedGeneration: 15
+    readyReplicas: 1
+    replicas: 2
+    terminatingReplicas: 0
+    unavailableReplicas: 1
+    updatedReplicas: 1
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: multiplication
+      meta.helm.sh/release-namespace: microservices
+    creationTimestamp: "2026-04-13T07:22:11Z"
+    labels:
+      app: multiplication
+      app.kubernetes.io/managed-by: Helm
+    name: multiplication
+    namespace: microservices
+    resourceVersion: "304828"
+    uid: c9b367d2-7284-4eff-bb00-69fc8b968fb0
+  spec:
+    clusterIP: 10.96.245.175
+    clusterIPs:
+    - 10.96.245.175
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: multiplication
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+kind: List
+metadata:
+  resourceVersion: ""

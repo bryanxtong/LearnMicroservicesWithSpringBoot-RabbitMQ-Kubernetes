@@ -9,6 +9,7 @@ service:
 env:
   SPRING_PROFILES_ACTIVE: "kubernetes"
   SPRING_CLOUD_CONSUL_HOST: "consul-server"
+  SPRING_CLOUD_CONSUL_DISCOVERY_INSTANCE_ID: "logs:${spring.cloud.client.ip-address}:8580"
   SPRING_RABBITMQ_HOST: "rabbitmq"
   OTEL_SERVICE_NAME: "logs"
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-lgtm:4318"
