@@ -30,9 +30,6 @@ ingress:
     - path: /ui(/|$)(.*)      # Consul Web UI
       service: consul-server
       port: 8500
-    - path: /consul(/|$)(.*)  # Consul Web UI (alternative)
-      service: consul-server
-      port: 8500
     - path: /grafana(/|$)(.*)  # Grafana Web UI
       service: otel-lgtm
       port: 3000

@@ -28,8 +28,10 @@ Supporting Services:
 | :------------------- | :------------------------------------- | :------------------------------------- |
 | Frontend             | http://localhost                       | No rewrite (catch-all)                 |
 | API Gateway          | http://localhost/api                   | Rewrite: `/api/*` → `/*`               |
+| Consul UI            | http://localhost/ui                    | No rewrite (native path)               |
+| Consul API           | http://localhost/v1                    | No rewrite (native path)               |
+| Consul (alternative) | http://localhost/consul                | Rewrite: `/consul/*` → `/ui/*`         |
 | Grafana (otel-lgtm)  | http://localhost/grafana               | No rewrite (has base path `/grafana`)  |
-| Consul UI            | http://localhost/consul                | No rewrite (has base path `/consul`)   |
 | RabbitMQ Management  | http://localhost/rabbitmq              | Rewrite: `/rabbitmq/*` → `/*`          |
 
 **Credentials:**
@@ -150,10 +152,11 @@ kind delete cluster --name kind
 4. **Startup Time**: Spring Boot with OpenTelemetry agent takes time to start. Readiness probes have a 180-second (3 minutes) initial delay.
 
 5. **Ingress Configuration**: Ingress rules are split into two resources based on path rewriting requirements:
-   - `k8s/values/ingress.yaml` - Services that need path rewriting (gateway, rabbitmq, frontend)
+   - `k8s/values/ingress.yaml` - Services that need path rewriting (gateway, rabbitmq, consul, frontend)
      - Uses `rewriteTarget: "/$2"` annotation to strip path prefixes
-     - Example: `/api/foo` → `/foo` before forwarding to gateway
-   - `k8s/values/ingress-no-rewrite.yaml` - Services that handle sub-paths themselves (consul, grafana)
+     - Example: `/api/foo` → `/foo`, `/consul/bar` → `/ui/bar`
+   - `k8s/values/ingress-no-rewrite.yaml` - Services that handle sub-paths natively (consul, grafana)
      - No rewriteTarget annotation, paths are forwarded as-is
-     - Consul expects `/v1`, `/ui`, `/consul` paths natively
+     - Consul HTTP API expects `/v1/*` paths
+     - Consul UI expects `/ui/*` paths
      - Grafana is configured with `GF_SERVER_ROOT_URL="/grafana"` to serve from sub-path

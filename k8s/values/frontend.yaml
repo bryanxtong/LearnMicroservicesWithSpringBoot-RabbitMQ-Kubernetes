@@ -8,13 +8,17 @@ service:
 
 livenessProbe:
   httpPath: /
-  initialDelaySeconds: 5
-  failureThreshold: 3
+  initialDelaySeconds: 30
+  timeoutSeconds: 5
+  periodSeconds: 10
+  failureThreshold: 5
 
 readinessProbe:
   httpPath: /
-  initialDelaySeconds: 5
-  failureThreshold: 3
+  initialDelaySeconds: 30
+  timeoutSeconds: 5
+  periodSeconds: 10
+  failureThreshold: 5
 
 resources:
   requests:
