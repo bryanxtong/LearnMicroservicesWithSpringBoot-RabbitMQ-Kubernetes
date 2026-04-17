@@ -17,7 +17,7 @@ ingress:
   enabled: true
   host: localhost
   # Rewrite target: strips the path prefix before forwarding
-  # Example: /api/foo → /foo, /rabbitmq/bar → /bar
+  # Example: /api/foo → /foo, /rabbitmq/bar → /bar, /consul/foo → /ui/foo
   rewriteTarget: "/$2"
   paths:
     - path: /api(/|$)(.*)
@@ -26,7 +26,10 @@ ingress:
     - path: /rabbitmq(/|$)(.*)
       service: rabbitmq
       port: 15672
-    - path: /()(.*)  # Catch-all: matches everything else
+    - path: /consul(/|$)(.*)
+      service: consul-server
+      port: 8500
+    - path: /()(.*)
       service: frontend
       port: 80
 
