@@ -39,7 +39,9 @@ configMap:
         cloud:
           consul:
             discovery:
-              instance-id: ${spring.application.name}-${random.int(1000)}
+              instance-id: ${spring.application.name}:${spring.cloud.client.ip-address}:${server.port}
+              deregister: true
+              health-check-critical-timeout: 30s
 
 resources:
   requests:
